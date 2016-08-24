@@ -19,6 +19,8 @@ func init() {
 }
 
 func main() {
+	version := "1.0"
+
 	instance, _ := os.Hostname()
 
 	env := os.Getenv("BOXFUSE_ENV")
@@ -47,7 +49,7 @@ func main() {
 		level = "ERROR"
 	}
 
-	log.Println("Redirecting " + level + " logs for " + image + " to CloudWatch Logs" + endpointMsg + " (group: " + env + ", stream: " + app + ") ...")
+	log.Println("Boxfuse CloudWatch Logs Agent " + version + " redirecting " + level + " logs for " + image + " to CloudWatch Logs" + endpointMsg + " (group: " + env + ", stream: " + app + ") ...")
 
 	logger, err := logger.NewLogger(session.New(nil), endpoint, env, app, level, time.Second, image, instance)
 	if err != nil {
