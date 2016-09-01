@@ -8,6 +8,7 @@ import (
 	"time"
 	"github.com/aws/aws-sdk-go/aws/session"
 	".."
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 var (
@@ -23,10 +24,11 @@ func main() {
 
 	instance, _ := os.Hostname()
 
-	env := os.Getenv("BOXFUSE_ENV")
-	if env == "" {
+	envVar := os.Getenv("BOXFUSE_ENV")
+	if envVar == "" {
 		log.Fatal("Missing BOXFUSE_ENV environment variable")
 	}
+	env := "boxfuse-" + envVar
 
 	app := os.Getenv("BOXFUSE_APP")
 	if app == "" {
@@ -40,8 +42,12 @@ func main() {
 
 	endpoint := os.Getenv("BOXFUSE_CLOUDWATCHLOGS_ENDPOINT")
 	endpointMsg := "";
+	var awsSession *session.Session
 	if endpoint != "" {
 		endpointMsg = " at " + endpoint;
+		awsSession = session.New(&aws.Config{Region: aws.String("us-east-1")})
+	} else {
+		awsSession = session.New()
 	}
 
 	level := "INFO"
@@ -51,15 +57,15 @@ func main() {
 
 	log.Println("Boxfuse CloudWatch Logs Agent " + version + " redirecting " + level + " logs for " + image + " to CloudWatch Logs" + endpointMsg + " (group: " + env + ", stream: " + app + ") ...")
 
-	logger, err := logger.NewLogger(session.New(nil), endpoint, env, app, level, time.Second, image, instance)
+	logger1, err := logger.NewLogger(awsSession, endpoint, env, app, level, time.Second, image, instance)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if _, err := io.Copy(logger, os.Stdin); err != nil {
+	if _, err := io.Copy(logger1, os.Stdin); err != nil {
 		log.Println("copy err", err)
 	}
-	if err := logger.Close(); err != nil {
+	if err := logger1.Close(); err != nil {
 		log.Println(err)
 	}
 	log.Println("Exiting...")
