@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	".."
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
 var (
@@ -45,7 +46,7 @@ func main() {
 	var awsSession *session.Session
 	if endpoint != "" {
 		endpointMsg = " at " + endpoint;
-		awsSession = session.New(&aws.Config{Region: aws.String("us-east-1")})
+		awsSession = session.New(&aws.Config{Region: aws.String("us-east-1"), Credentials: credentials.NewStaticCredentials("dummy", "dummy", "")})
 	} else {
 		awsSession = session.New()
 	}
