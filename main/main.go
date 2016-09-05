@@ -29,7 +29,7 @@ func main() {
 	if envVar == "" {
 		log.Fatal("Missing BOXFUSE_ENV environment variable")
 	}
-	env := "boxfuse-" + envVar
+	env := "boxfuse/" + envVar
 
 	app := os.Getenv("BOXFUSE_APP")
 	if app == "" {
