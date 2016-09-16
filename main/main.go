@@ -10,6 +10,7 @@ import (
 	".."
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"strings"
 )
 
 var (
@@ -31,15 +32,12 @@ func main() {
 	}
 	env := "boxfuse/" + envVar
 
-	app := os.Getenv("BOXFUSE_APP")
-	if app == "" {
-		log.Fatal("Missing BOXFUSE_APP environment variable")
-	}
-
 	image := os.Getenv("BOXFUSE_IMAGE_COORDINATES")
 	if image == "" {
 		log.Fatal("Missing BOXFUSE_IMAGE_COORDINATES environment variable")
 	}
+
+	app := strings.SplitN(image, ":", 1)[0]
 
 	endpoint := os.Getenv("BOXFUSE_CLOUDWATCHLOGS_ENDPOINT")
 	endpointMsg := "";
