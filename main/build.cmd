@@ -1,3 +1,4 @@
 @Echo off
 
-go install -ldflags "-s"
+go build -ldflags "-s"
+mv main cloudwatchlogs-agent.exe

@@ -6,15 +6,16 @@ import (
 	"log"
 	"os"
 	"time"
-	"github.com/aws/aws-sdk-go/aws/session"
-	".."
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"strings"
+	".."
 )
 
 var (
 	stderr = flag.Bool("stderr", false, "true if this logs messages from stderr instead of stdout")
+	x = flag.Bool("X", false, "show internal logs")
 )
 
 func init() {
@@ -22,7 +23,7 @@ func init() {
 }
 
 func main() {
-	version := "1.0"
+	version := "1.0.2"
 
 	instance, _ := os.Hostname()
 
@@ -37,7 +38,7 @@ func main() {
 		log.Fatal("Missing BOXFUSE_IMAGE_COORDINATES environment variable")
 	}
 
-	app := strings.SplitN(image, ":", 1)[0]
+	app := strings.Split(image, ":")[0]
 
 	endpoint := os.Getenv("BOXFUSE_CLOUDWATCHLOGS_ENDPOINT")
 	endpointMsg := "";
@@ -56,7 +57,7 @@ func main() {
 
 	log.Println("Boxfuse CloudWatch Logs Agent " + version + " redirecting " + level + " logs for " + image + " to CloudWatch Logs" + endpointMsg + " (group: " + env + ", stream: " + app + ") ...")
 
-	logger1, err := logger.NewLogger(awsSession, endpoint, env, app, level, time.Second, image, instance)
+	logger1, err := logger.NewLogger(awsSession, endpoint, env, app, level, time.Second, image, instance, x)
 	if err != nil {
 		log.Fatal(err)
 	}

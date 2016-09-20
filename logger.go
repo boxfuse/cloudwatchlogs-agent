@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"strconv"
 )
 
 type (
@@ -60,7 +61,7 @@ var (
 	ErrStreamBackedUp = errors.New("stream backed up")
 )
 
-func NewLogger(sess *session.Session, endpoint, group, stream, level string, flushInterval time.Duration, image, instance string) (*Logger, error) {
+func NewLogger(sess *session.Session, endpoint, group, stream, level string, flushInterval time.Duration, image, instance string, x *bool) (*Logger, error) {
 	config := aws.NewConfig()
 	config.Endpoint = &endpoint
 	l := &Logger{
@@ -91,7 +92,7 @@ func NewLogger(sess *session.Session, endpoint, group, stream, level string, flu
 					logEvents = append(logEvents, e)
 				case <-flushTime.C:
 					if len(logEvents) > 0 {
-						l.flush(logEvents)
+						l.flush(logEvents, x)
 						logEvents = nil
 					}
 				case <-l.done:
@@ -100,7 +101,7 @@ func NewLogger(sess *session.Session, endpoint, group, stream, level string, flu
 						case e := <-events:
 							logEvents = append(logEvents, e)
 						default:
-							l.flush(logEvents)
+							l.flush(logEvents, x)
 							l.done <- struct{}{}
 							close(l.done)
 							runtime.Goexit()
@@ -123,6 +124,10 @@ func NewLogger(sess *session.Session, endpoint, group, stream, level string, flu
 
 		json, _ := json.Marshal(m)
 		s := string(json)
+
+		if (*x) {
+			println("J: " + s)
+		}
 
 		e := &cloudwatchlogs.InputLogEvent{
 			Timestamp: aws.Int64(time.Now().UnixNano() / int64(time.Millisecond)),
@@ -152,7 +157,7 @@ func eventLength(e *cloudwatchlogs.InputLogEvent) int {
 	return len(*e.Message) + 26 // padding per spec
 }
 
-func (l *Logger) flush(logEvents []*cloudwatchlogs.InputLogEvent) {
+func (l *Logger) flush(logEvents []*cloudwatchlogs.InputLogEvent, x *bool) {
 
 	// The maximum rate of a PutLogEvents request is 5 requests per second per log stream.
 	rate := NewRateLimiter(5, time.Second)
@@ -191,10 +196,14 @@ func (l *Logger) flush(logEvents []*cloudwatchlogs.InputLogEvent) {
 		}
 
 		if err := NewTrier(MaxRetryTime).TryFunc(func() (error, bool) {
-
-			//start := time.Now()
+			if (*x) {
+				println("P: " + strconv.Itoa(len(input.LogEvents)))
+			}
 			resp, err := l.Service.PutLogEvents(input)
-			//fmt.Println("PutLogEvents:", time.Since(start))
+			if (*x) {
+				println(fmt.Sprintf("R: %v", resp))
+				println(fmt.Sprintf("E: %v", err))
+			}
 
 			if err != nil {
 				if awsErr, ok := err.(awserr.Error); ok {
